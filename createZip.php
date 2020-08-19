@@ -7,31 +7,54 @@
 function createZip (){
     
     // Get real path of the "files" directory
-    echo $rootPath = realpath('files');
+    $rootPath = realpath('files');
 
-    // Initialize an archive object
-    $zip = new ZipArchive();
+    // Check if the "files" directory exists and is not empty
+    if(is_dir($rootPath)) {
 
-    // Define where the zip will be stored
-    $zip->open('zip/file.zip', ZipArchive::CREATE | ZipArchive::OVERWRITE );
+        // List folders files
+        $filesList = array_diff(scandir($rootPath), array('..', '.'));
+
+        if(empty($filesList)){
+            $_SESSION['error'] = 'Le dossier est vide';
+            header('Location: test.php');
+            die;
+            
+        
+        }else{
     
-    // Create "recursive directory iterator" to iterate recursively over filesystem directories, here "files" 
-    /** @var SplFileInfo[] $files */
-    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rootPath), RecursiveIteratorIterator::LEAVES_ONLY);
+        // Define the file name
+        $filename = "zip/file.zip";
     
-    // Loop on files
-    foreach ($files as $name => $file){
-        // Skip the directory
-        if (!$file->isDir()){
-            // Get real and relative path for current files
-            $filePath = $file->getRealPath();
-            $relativePath = substr($filePath, strlen($rootPath) + 1);
+        // Initialize an archive object
+        $zip = new ZipArchive();
     
-            // Add current files to archive
-            $zip->addFile($filePath, $relativePath);
+        // Define where the zip will be stored
+        $zip->open($filename, ZipArchive::CREATE | ZipArchive::OVERWRITE );
+        
+        // Create "recursive directory iterator" to iterate recursively over filesystem directories, here "files" 
+        /** @var SplFileInfo[] $files */
+        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rootPath), RecursiveIteratorIterator::LEAVES_ONLY);
+        
+        // Loop on files
+        foreach ($files as $name => $file){
+
+            // Skip the directory
+            if (!$file->isDir()){
+
+                // Get real and relative path for current files
+                $filePath = $file->getRealPath();
+                $relativePath = substr($filePath, strlen($rootPath) + 1);
+        
+                // Add current files to archive
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
+        
+        // Zip archive will be created only after closing the object
+        $zip->close();
+        echo $filename;
+
         }
     }
-    
-    // Zip archive will be created only after closing the object
-    $zip->close();
 }
